@@ -26,23 +26,23 @@ class GameState:
         absolutely necessary to implement ismcts in any imperfect information game,
         although they could be enhanced and made quicker, for example by using a 
         GetRandomMove() function to generate a random move during rollout.
-        By convention the players are numbered 1, 2, ..., self.numberOfPlayers.
+        By convention the players are numbered 1, 2, ..., self.number_of_players.
     """
 
     def __init__(self):
-        self.numberOfPlayers = 2
-        self.playerToMove = 1
+        self.number_of_players = 2
+        self.player_to_move = 1
 
     def get_next_player(self, p):
         """ Return the player to the left of the specified player
         """
-        return (p % self.numberOfPlayers) + 1
+        return (p % self.number_of_players) + 1
 
     def clone(self):
         """ Create a deep clone of this game state.
         """
         st = GameState()
-        st.playerToMove = self.playerToMove
+        st.player_to_move = self.player_to_move
         return st
 
     def clone_and_randomize(self, observer):
@@ -52,9 +52,9 @@ class GameState:
 
     def do_move(self, move):
         """ update a state by carrying out the given move.
-            Must update playerToMove.
+            Must update player_to_move.
         """
-        self.playerToMove = self.get_next_player(self.playerToMove)
+        self.player_to_move = self.get_next_player(self.player_to_move)
 
     def get_moves(self):
         """ Get all possible moves from this state.
@@ -107,30 +107,30 @@ class KnockoutWhistState(GameState):
         """ Initialise the game state. n is the number of players (from 2 to 7).
             """
         GameState.__init__(self)
-        self.numberOfPlayers = n
-        self.playerToMove = 1
-        self.tricksInRound = 7
-        self.playerHands = {p: [] for p in xrange(1, self.numberOfPlayers + 1)}
+        self.number_of_players = n
+        self.player_to_move = 1
+        self.tricks_in_round = 7
+        self.player_hands = {p: [] for p in xrange(1, self.number_of_players + 1)}
         self.discards = []
-        self.currentTrick = []
-        self.trumpSuit = None
-        self.tricksTaken = {}
-        self.knockedOut = {p: False for p in
-                           xrange(1, self.numberOfPlayers + 1)}
+        self.current_trick = []
+        self.trump_suit = None
+        self.tricks_taken = {}
+        self.knocked_out = {p: False for p in
+                           xrange(1, self.number_of_players + 1)}
         self._deal()
 
     def clone(self):
         """ Create a deep clone of this game state.
         """
-        st = KnockoutWhistState(self.numberOfPlayers)
-        st.playerToMove = self.playerToMove
-        st.tricksInRound = self.tricksInRound
-        st.playerHands = deepcopy(self.playerHands)
+        st = KnockoutWhistState(self.number_of_players)
+        st.player_to_move = self.player_to_move
+        st.tricks_in_round = self.tricks_in_round
+        st.player_hands = deepcopy(self.player_hands)
         st.discards = deepcopy(self.discards)
-        st.currentTrick = deepcopy(self.currentTrick)
-        st.trumpSuit = self.trumpSuit
-        st.tricksTaken = deepcopy(self.tricksTaken)
-        st.knockedOut = deepcopy(self.knockedOut)
+        st.current_trick = deepcopy(self.current_trick)
+        st.trump_suit = self.trump_suit
+        st.tricks_taken = deepcopy(self.tricks_taken)
+        st.knocked_out = deepcopy(self.knocked_out)
         return st
 
     def clone_and_randomize(self, observer):
@@ -141,8 +141,8 @@ class KnockoutWhistState(GameState):
 
         # The observer can see his own hand and the cards in the current trick,
         # and can remember the cards played in previous tricks
-        seen_cards = st.playerHands[observer] + st.discards + \
-                     [card for (player, card) in st.currentTrick]
+        seen_cards = st.player_hands[observer] + st.discards + \
+                     [card for (player, card) in st.current_trick]
 
         # The observer can't see the rest of the deck
         unseen_cards = [card for card in st._get_card_deck()
@@ -150,15 +150,15 @@ class KnockoutWhistState(GameState):
 
         # _deal the unseen cards to the other players
         random.shuffle(unseen_cards)
-        for p in xrange(1, st.numberOfPlayers + 1):
+        for p in xrange(1, st.number_of_players + 1):
             if p != observer:
                 # _deal cards to player p
                 # Store the size of player p's hand
-                numCards = len(self.playerHands[p])
-                # Give player p the first numCards unseen cards
-                st.playerHands[p] = unseen_cards[:numCards]
+                num_cards = len(self.player_hands[p])
+                # Give player p the first num_cards unseen cards
+                st.player_hands[p] = unseen_cards[:num_cards]
                 # Remove those cards from unseen_cards
-                unseen_cards = unseen_cards[numCards:]
+                unseen_cards = unseen_cards[num_cards:]
 
         return st
 
@@ -173,88 +173,88 @@ class KnockoutWhistState(GameState):
         """ Reset the game state for the beginning of a new round, and _deal the cards.
         """
         self.discards = []
-        self.currentTrick = []
-        self.tricksTaken = {p: 0 for p in xrange(1, self.numberOfPlayers + 1)}
+        self.current_trick = []
+        self.tricks_taken = {p: 0 for p in xrange(1, self.number_of_players + 1)}
 
         # Construct a deck, shuffle it, and _deal it to the players
         deck = self._get_card_deck()
         random.shuffle(deck)
-        for p in xrange(1, self.numberOfPlayers + 1):
-            self.playerHands[p] = deck[:self.tricksInRound]
-            deck = deck[self.tricksInRound:]
+        for p in xrange(1, self.number_of_players + 1):
+            self.player_hands[p] = deck[:self.tricks_in_round]
+            deck = deck[self.tricks_in_round:]
 
         # Choose the trump suit for this round
-        self.trumpSuit = random.choice(['C', 'D', 'H', 'S'])
+        self.trump_suit = random.choice(['C', 'D', 'H', 'S'])
 
     def get_next_player(self, p):
         """ Return the player to the left of the specified player, skipping players who have been knocked out
         """
-        next = (p % self.numberOfPlayers) + 1
+        next_player = (p % self.number_of_players) + 1
         # Skip any knocked-out players
-        while next != p and self.knockedOut[next]:
-            next = (next % self.numberOfPlayers) + 1
-        return next
+        while next_player != p and self.knocked_out[next_player]:
+            next_player = (next_player % self.number_of_players) + 1
+        return next_player
 
     def do_move(self, move):
         """ update a state by carrying out the given move.
-            Must update playerToMove.
+            Must update player_to_move.
         """
         # Store the played card in the current trick
-        self.currentTrick.append((self.playerToMove, move))
+        self.current_trick.append((self.player_to_move, move))
 
         # Remove the card from the player's hand
-        self.playerHands[self.playerToMove].remove(move)
+        self.player_hands[self.player_to_move].remove(move)
 
         # Find the next player
-        self.playerToMove = self.get_next_player(self.playerToMove)
+        self.player_to_move = self.get_next_player(self.player_to_move)
 
         # If the next player has already played in this trick, then the trick is over
-        if any(True for (player, card) in self.currentTrick if
-               player == self.playerToMove):
+        if any(True for (player, card) in self.current_trick if
+               player == self.player_to_move):
             # Sort the plays in the trick: those that followed suit (in ascending rank order), then any trump plays (in ascending rank order)
-            (leader, leadCard) = self.currentTrick[0]
-            suitedPlays = [(player, card.rank) for (player, card) in
-                           self.currentTrick if card.suit == leadCard.suit]
-            trumpPlays = [(player, card.rank) for (player, card) in
-                          self.currentTrick if card.suit == self.trumpSuit]
-            sortedPlays = sorted(suitedPlays,
-                                 key=lambda (player, rank): rank) + sorted(
-                trumpPlays, key=lambda (player, rank): rank)
-            # The winning play is the last element in sortedPlays
-            trickWinner = sortedPlays[-1][0]
+            (leader, lead_card) = self.current_trick[0]
+            suited_plays = [(player, card.rank) for (player, card) in
+                           self.current_trick if card.suit == lead_card.suit]
+            trump_plays = [(player, card.rank) for (player, card) in
+                          self.current_trick if card.suit == self.trump_suit]
+            sorted_plays = sorted(suited_plays,
+                                 key=lambda (aplayer, rank): rank) + sorted(
+                trump_plays, key=lambda (aplayer, rank): rank)
+            # The winning play is the last element in sorted_plays
+            trick_winner = sorted_plays[-1][0]
 
             # update the game state
-            self.tricksTaken[trickWinner] += 1
-            self.discards += [card for (player, card) in self.currentTrick]
-            self.currentTrick = []
-            self.playerToMove = trickWinner
+            self.tricks_taken[trick_winner] += 1
+            self.discards += [card for (player, card) in self.current_trick]
+            self.current_trick = []
+            self.player_to_move = trick_winner
 
             # If the next player's hand is empty, this round is over
-            if not self.playerHands[self.playerToMove]:
-                self.tricksInRound -= 1
-                self.knockedOut = {
-                p: (self.knockedOut[p] or self.tricksTaken[p] == 0) for p in
-                xrange(1, self.numberOfPlayers + 1)}
+            if not self.player_hands[self.player_to_move]:
+                self.tricks_in_round -= 1
+                self.knocked_out = {
+                p: (self.knocked_out[p] or self.tricks_taken[p] == 0) for p in
+                xrange(1, self.number_of_players + 1)}
                 # If all but one players are now knocked out, the game is over
-                if len([x for x in self.knockedOut.itervalues() if
+                if len([x for x in self.knocked_out.itervalues() if
                         x == False]) <= 1:
-                    self.tricksInRound = 0
+                    self.tricks_in_round = 0
 
                 self._deal()
 
     def get_moves(self):
         """ Get all possible moves from this state.
         """
-        hand = self.playerHands[self.playerToMove]
-        if not self.currentTrick:
+        hand = self.player_hands[self.player_to_move]
+        if not self.current_trick:
             # May lead a trick with any card
             return hand
         else:
-            (leader, leadCard) = self.currentTrick[0]
+            (leader, lead_card) = self.current_trick[0]
             # Must follow suit if it is possible to do so
-            cardsInSuit = [card for card in hand if card.suit == leadCard.suit]
-            if cardsInSuit:
-                return cardsInSuit
+            cards_in_suit = [card for card in hand if card.suit == lead_card.suit]
+            if cards_in_suit:
+                return cards_in_suit
             else:
                 # Can't follow suit, so can play any card
                 return hand
@@ -262,20 +262,20 @@ class KnockoutWhistState(GameState):
     def get_result(self, player):
         """ Get the game result from the viewpoint of player. 
         """
-        return 0 if (self.knockedOut[player]) else 1
+        return 0 if (self.knocked_out[player]) else 1
 
     def __repr__(self):
         """ Return a human-readable representation of the state
         """
-        result = "Round %i" % self.tricksInRound
-        result += " | P%i: " % self.playerToMove
+        result = "Round %i" % self.tricks_in_round
+        result += " | P%i: " % self.player_to_move
         result += ",".join(
-            str(card) for card in self.playerHands[self.playerToMove])
-        result += " | Tricks: %i" % self.tricksTaken[self.playerToMove]
-        result += " | Trump: %s" % self.trumpSuit
+            str(card) for card in self.player_hands[self.player_to_move])
+        result += " | Tricks: %i" % self.tricks_taken[self.player_to_move]
+        result += " | Trump: %s" % self.trump_suit
         result += " | Trick: ["
         result += ",".join(
-            ("%i:%s" % (player, card)) for (player, card) in self.currentTrick)
+            ("%i:%s" % (player, card)) for (player, card) in self.current_trick)
         result += "]"
         return result
 
@@ -284,7 +284,7 @@ class Node:
     """ A node in the game tree. Note wins is always from the viewpoint of player_just_moved.
     """
 
-    def __init__(self, move=None, parent=None, playerJustMoved=None):
+    def __init__(self, move=None, parent=None, player_just_moved=None):
         # the move that got us to this node - "None" for the root node
         self.move = move
         # "None" for the root node
@@ -294,7 +294,7 @@ class Node:
         self.visits = 0
         self.avails = 1
         # the only part of the state that the Node needs later
-        self.player_just_moved = playerJustMoved
+        self.player_just_moved = player_just_moved
 
     def get_untried_moves(self, legal_moves):
         """ Return the elements of legal_moves for which this node does not have children.
@@ -330,7 +330,7 @@ class Node:
         """ Add a new child node for the move m.
             Return the added child node
         """
-        n = Node(move=m, parent=self, playerJustMoved=p)
+        n = Node(move=m, parent=self, player_just_moved=p)
         self.child_nodes.append(n)
         return n
 
@@ -378,7 +378,7 @@ def ismcts(rootstate, itermax, verbose=False):
         node = rootnode
 
         # Determinize
-        state = rootstate.clone_and_randomize(rootstate.playerToMove)
+        state = rootstate.clone_and_randomize(rootstate.player_to_move)
 
         # Select
         while state.get_moves() != [] and node.get_untried_moves(
@@ -387,10 +387,10 @@ def ismcts(rootstate, itermax, verbose=False):
             state.do_move(node.move)
 
         # Expand
-        untriedMoves = node.get_untried_moves(state.get_moves())
-        if untriedMoves:  # if we can expand (i.e. state/node is non-terminal)
-            m = random.choice(untriedMoves)
-            player = state.playerToMove
+        untried_moves = node.get_untried_moves(state.get_moves())
+        if untried_moves:  # if we can expand (i.e. state/node is non-terminal)
+            m = random.choice(untried_moves)
+            player = state.player_to_move
             state.do_move(m)
             node = node.add_child(m, player)  # add child and descend tree
 
@@ -404,7 +404,7 @@ def ismcts(rootstate, itermax, verbose=False):
             node = node.parent_node
 
     # Output some information about the tree - can be omitted
-    if (verbose):
+    if verbose:
         print rootnode.tree_to_string(0)
     else:
         print rootnode.children_to_string()
@@ -418,22 +418,22 @@ def play_game():
     """
     state = KnockoutWhistState(4)
 
-    while (state.get_moves() != []):
+    while state.get_moves():
         print str(state)
         # Use different numbers of iterations (simulations, tree nodes) for different players
-        if state.playerToMove == 1:
+        if state.player_to_move == 1:
             m = ismcts(rootstate=state, itermax=1000, verbose=False)
         else:
             m = ismcts(rootstate=state, itermax=100, verbose=False)
         print "Best Move: " + str(m) + "\n"
         state.do_move(m)
 
-    someoneWon = False
-    for p in xrange(1, state.numberOfPlayers + 1):
+    someone_won = False
+    for p in xrange(1, state.number_of_players + 1):
         if state.get_result(p) > 0:
             print "Player " + str(p) + " wins!"
-            someoneWon = True
-    if not someoneWon:
+            someone_won = True
+    if not someone_won:
         print "Nobody wins!"
 
 
