@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from copy import deepcopy
+from operator import attrgetter
 import random
 import sys
 from framework import GameState, Card, ismcts, Deck
@@ -126,7 +127,7 @@ class PresidentGameState(GameState):
                         self.modes.add(DUBS)
                     elif len(move) == 3:
                         self.modes.add(TRIPS)
-                    elif len(move) == 2:
+                    elif len(move) == 4:
                         self.modes.add(QUADS)
                 else:
                     # a sequence
@@ -161,22 +162,63 @@ class PresidentGameState(GameState):
         """
         Get all possible moves from this state.
         """
-        hand = self.player_hands[self.player_to_move]
+        hand = sorted(self.player_hands[self.player_to_move],
+                      key=attrgetter('rank', 'suit'))
         if not hand:
             # If there are no moves left, then return the empty list.
             return hand
         if not self.current_trick:
             # May lead a trick with any card. Can't pass - that would be silly.
             # Moves may involve multiple cards, so return a list of lists.
-            return [[card] for card in hand]
+            single_cards = [[card] for card in hand]
+
+            return single_cards
         else:
             # Start by picking out just the higher cards. Card rank needs to be strictly greater.
             # Grab the rank of the last card from the last trick.
             last_card_rank = self.current_trick[-1][-1].rank
-            if CONSECUTIVE in self.modes:
-                moves = [[card] for card in hand if card.rank == last_card_rank + 1]
-            else:
-                moves = [[card] for card in hand if card.rank > last_card_rank]
+            candidate_cards = [card for card in hand if card.rank > last_card_rank]
+            moves = []
+
+            for index, card in enumerate(candidate_cards):
+                # Make a single loop through the candidate cards and include
+                # not just the valid single cards but also the DUBS, TRIPS, QUADS and RUNS.
+
+                # Always include the single cards
+                moves.append([card])
+
+                # Now get the list of the higher cards
+                next_cards = candidate_cards[index+1:]
+
+                # The aim is to loop over them, until enough cards have been
+                # seen to know there aren't any combos (remember they are sorted)
+                searched_enough = False
+
+                for next_cards_index, next_card in enumerate(next_cards):
+                    # Start looking ahead to find combos
+                    if card.rank == next_card.rank:
+                        # A pair
+                        moves.append([card, next_card])
+
+                        # This is the second next_card - must be TRIPS
+                        if next_cards_index == 1:
+                            moves.append([card, next_cards[0], next_cards[1]])
+
+                        # This is the third next_card - must be QUADS
+                        if next_cards_index == 2:
+                            moves.append([card, next_cards[0], next_cards[1], next_cards[2]])
+
+                    if card.rank != next_card.rank:
+                        searched_enough = True
+                    if searched_enough:
+                        break
+
+
+
+            # if CONSECUTIVE in self.modes:
+            #     moves = [[card] for card in hand if card.rank == last_card_rank + 1]
+            # else:
+            #
 
             # If started with a multi card then need to follow
             # If started with a sequence then need to follow
