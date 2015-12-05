@@ -68,11 +68,23 @@ class GameState:
         """
         pass
 
+class Deck:
+    """
+    A deck of cards
+    """
+    def __init__(self):
+        self.cards = [Card(rank, suit) for rank in xrange(2, 14 + 1) for suit in
+                ['C', 'D', 'H', 'S']]
+
+    def shuffle(self):
+        random.shuffle(self.cards)
+
 
 class Card:
-    """ A playing card, with rank and suit.
-        rank must be an integer between 2 and 14 inclusive (Jack=11, Queen=12, King=13, Ace=14)
-        suit must be a string of length 1, one of 'C' (Clubs), 'D' (Diamonds), 'H' (Hearts) or 'S' (Spades)
+    """
+    A playing card, with rank and suit.
+    rank must be an integer between 2 and 14 inclusive (Jack=11, Queen=12, King=13, Ace=14)
+    suit must be a string of length 1, one of 'C' (Clubs), 'D' (Diamonds), 'H' (Hearts) or 'S' (Spades)
     """
 
     def __init__(self, rank, suit):
@@ -87,6 +99,9 @@ class Card:
         return "??23456789TJQKA"[self.rank] + self.suit
 
     def __eq__(self, other):
+        if isinstance(other, basestring):
+            # We're being compared to "PASS", and we can't be the same.
+            return False
         return self.rank == other.rank and self.suit == other.suit
 
     def __ne__(self, other):
@@ -94,7 +109,8 @@ class Card:
 
 
 class Node:
-    """ A node in the game tree. Note wins is always from the viewpoint of player_just_moved.
+    """
+    A node in the game tree. Note wins is always from the viewpoint of player_just_moved.
     """
 
     def __init__(self, move=None, parent=None, player_just_moved=None):
@@ -110,7 +126,8 @@ class Node:
         self.player_just_moved = player_just_moved
 
     def get_untried_moves(self, legal_moves):
-        """ Return the elements of legal_moves for which this node does not have children.
+        """
+        Return the elements of legal_moves for which this node does not have children.
         """
 
         # Find all moves for which this node *does* have children
@@ -120,8 +137,9 @@ class Node:
         return [move for move in legal_moves if move not in tried_moves]
 
     def ucb_select_child(self, legal_moves, exploration=0.7):
-        """ Use the UCB1 formula to select a child node, filtered by the given list of legal moves.
-            exploration is a constant balancing between exploitation and exploration, with default value 0.7 (approximately sqrt(2) / 2)
+        """
+        Use the UCB1 formula to select a child node, filtered by the given list of legal moves.
+        exploration is a constant balancing between exploitation and exploration, with default value 0.7 (approximately sqrt(2) / 2)
         """
 
         # Filter the list of children by the list of legal moves
@@ -140,15 +158,17 @@ class Node:
         return s
 
     def add_child(self, m, p):
-        """ Add a new child node for the move m.
-            Return the added child node
+        """
+        Add a new child node for the move m.
+        Return the added child node
         """
         n = Node(move=m, parent=self, player_just_moved=p)
         self.child_nodes.append(n)
         return n
 
     def update(self, terminal_state):
-        """ update this node - increment the visit count by one, and increase the win count by the result of terminal_state for self.player_just_moved.
+        """
+        update this node - increment the visit count by one, and increase the win count by the result of terminal_state for self.player_just_moved.
         """
         self.visits += 1
         if self.player_just_moved is not None:
@@ -159,7 +179,8 @@ class Node:
         self.move, self.wins, self.visits, self.avails)
 
     def tree_to_string(self, indent):
-        """ Represent the tree as a string, for debugging purposes.
+        """
+        Represent the tree as a string, for debugging purposes.
         """
         s = self.indent_string(indent) + str(self)
         for c in self.child_nodes:
@@ -181,8 +202,9 @@ class Node:
 
 
 def ismcts(rootstate, itermax, verbose=False):
-    """ Conduct an ismcts search for itermax iterations starting from rootstate.
-        Return the best move from the rootstate.
+    """
+    Conduct an ismcts search for itermax iterations starting from rootstate.
+    Return the best move from the rootstate.
     """
 
     rootnode = Node()
