@@ -96,12 +96,13 @@ class Card:
         self.suit = suit
 
     def __repr__(self):
-        return "??23456789TJQKA"[self.rank] + self.suit
+        return "??3456789TJQKA2"[self.rank] + self.suit
 
     def __eq__(self, other):
         if isinstance(other, basestring):
             # We're being compared to "PASS", and we can't be the same.
             return False
+
         return self.rank == other.rank and self.suit == other.suit
 
     def __ne__(self, other):
