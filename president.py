@@ -87,7 +87,8 @@ class PresidentGameState(GameState):
                 num_cards = 34 - len(self.discards) - len(self.player_hands[observer])
 
                 # Give player p the first num_cards unseen cards
-                st.player_hands[p] = unseen_cards[:num_cards]
+                st.player_hands[p] = sorted(unseen_cards[:num_cards],
+                                            key=attrgetter('rank', 'suit'))
 
         return st
 
@@ -103,10 +104,12 @@ class PresidentGameState(GameState):
         deck.shuffle()
 
         # Player zero gets the first 17 cards
-        self.player_hands[0] = deck.cards[:17]
+        self.player_hands[0] = sorted(deck.cards[:17],
+                                      key=attrgetter('rank', 'suit'))
 
         # Player one gets the last 17 cards
-        self.player_hands[1] = deck.cards[-17:]
+        self.player_hands[1] = sorted(deck.cards[-17:],
+                                      key=attrgetter('rank', 'suit'))
 
     def do_move(self, move):
         """ update a state by carrying out the given move.
@@ -129,23 +132,21 @@ class PresidentGameState(GameState):
                         self.modes.add(TRIPS)
                     elif len(move) == 4:
                         self.modes.add(QUADS)
-                else:
-                    # a sequence
-                    self.modes.add(RUN)
+                # else:
+                #     # a sequence
+                #     self.modes.add(RUN)
 
             # On the second move, check for CONSECUTIVE mode
             if len(self.current_trick) == 1:
-                if DUBS in self.modes or TRIPS in self.modes or QUADS in self.modes \
-                    and self.current_trick[0][0].rank + 1 == move.rank[0]:
-                    # Just need to check one of the cards in the first hand
+                # if DUBS in self.modes or TRIPS in self.modes or QUADS in self.modes \
+                #     and self.current_trick[0][0].rank + 1 == move[0].rank:
+                #     # Just need to check one of the cards in the first hand
+                #     self.modes.add(CONSECUTIVE)
+                # elif RUN in self.modes and self.current_trick[0][-1].rank +1 == move.rank[0][0]:
+                #     # Check the highest card (TODO assume they are ordered) on the first hand.
+                #     self.modes.add(CONSECUTIVE)
+                if self.current_trick[0][0].rank + 1 == move[0].rank:
                     self.modes.add(CONSECUTIVE)
-                elif RUN in self.modes and self.current_trick[0][-1].rank +1 == move.rank[0][0]:
-                    # Check the highest card (assume they are ordered) on the first hand.
-                    self.modes.add(CONSECUTIVE)
-                elif self.current_trick[0][0].rank + 1 == move[0].rank:
-                    # print "First card: %s Second Card: %s" % (self.current_trick, move)
-                    self.modes.add(CONSECUTIVE)
-                    # print self.modes
 
             # Store the played card in the current trick
             self.current_trick.append(move)
@@ -162,63 +163,66 @@ class PresidentGameState(GameState):
         """
         Get all possible moves from this state.
         """
-        hand = sorted(self.player_hands[self.player_to_move],
-                      key=attrgetter('rank', 'suit'))
+        hand = self.player_hands[self.player_to_move]
         if not hand:
             # If there are no moves left, then return the empty list.
             return hand
-        if not self.current_trick:
-            # May lead a trick with any card. Can't pass - that would be silly.
-            # Moves may involve multiple cards, so return a list of lists.
-            single_cards = [[card] for card in hand]
-
-            return single_cards
         else:
-            # Start by picking out just the higher cards. Card rank needs to be strictly greater.
-            # Grab the rank of the last card from the last trick.
-            last_card_rank = self.current_trick[-1][-1].rank
-            candidate_cards = [card for card in hand if card.rank > last_card_rank]
+            if not self.current_trick:
+                # May lead a trick with any card. Can't pass - that would be silly.
+                # Moves may involve multiple cards, so return a list of lists.
+                candidate_cards = [card for card in hand]
+            else:
+                # Start by picking out just the higher cards. Card rank needs to be strictly greater.
+                # Grab the rank of the last card from the last trick.
+                last_card_rank = self.current_trick[-1][-1].rank
+                if CONSECUTIVE in self.modes:
+                    candidate_cards = [card for card in hand if card.rank == last_card_rank + 1]
+                else:
+                    candidate_cards = [card for card in hand if card.rank > last_card_rank]
             moves = []
 
             for index, card in enumerate(candidate_cards):
                 # Make a single loop through the candidate cards and include
-                # not just the valid single cards but also the DUBS, TRIPS, QUADS and RUNS.
+                # not just the valid single card plays but also the DUBS, TRIPS, QUADS and RUNS.
 
-                # Always include the single cards
-                moves.append([card])
+                if DUBS not in self.modes and TRIPS not in self.modes and QUADS not in self.modes:
+                    # Always include the single cards when not in combo mode
+                    moves.append([card])
 
-                # Now get the list of the higher cards
-                next_cards = candidate_cards[index+1:]
+                if not self.current_trick or DUBS in self.modes or TRIPS in self.modes or QUADS in self.modes:
+                    # It's either the first hand, or combo mode is active. There's more work to do...
+                    # Now get the list of the higher cards
+                    next_cards = candidate_cards[index+1:]
 
-                # The aim is to loop over them, until enough cards have been
-                # seen to know there aren't any combos (remember they are sorted)
-                searched_enough = False
+                    # The aim is to loop over them, until enough cards have been
+                    # seen to know there aren't any combos (remember they are sorted)
+                    searched_enough = False
 
-                for next_cards_index, next_card in enumerate(next_cards):
-                    # Start looking ahead to find combos
-                    if card.rank == next_card.rank:
-                        # A pair
-                        moves.append([card, next_card])
+                    for next_cards_index, next_card in enumerate(next_cards):
+                        # Start looking ahead to find combos
+                        if card.rank == next_card.rank:
 
-                        # This is the second next_card - must be TRIPS
-                        if next_cards_index == 1:
-                            moves.append([card, next_cards[0], next_cards[1]])
+                            if not self.current_trick or DUBS in self.modes:
+                                # A pair
+                                moves.append([card, next_card])
 
-                        # This is the third next_card - must be QUADS
-                        if next_cards_index == 2:
-                            moves.append([card, next_cards[0], next_cards[1], next_cards[2]])
+                            if not self.current_trick or TRIPS in self.modes:
+                                # This is the second next_card - must be TRIPS
+                                if next_cards_index == 1:
+                                    moves.append([card, next_cards[0], next_cards[1]])
 
-                    if card.rank != next_card.rank:
-                        searched_enough = True
-                    if searched_enough:
-                        break
+                            if not self.current_trick or QUADS in self.modes:
+                                # This is the third next_card - must be QUADS
+                                if next_cards_index == 2:
+                                    moves.append([card, next_cards[0], next_cards[1], next_cards[2]])
 
+                        else:
+                            searched_enough = True
+                        if searched_enough:
+                            break
 
-
-            # if CONSECUTIVE in self.modes:
-            #     moves = [[card] for card in hand if card.rank == last_card_rank + 1]
-            # else:
-            #
+            # And add in runs.
 
             # If started with a multi card then need to follow
             # If started with a sequence then need to follow
@@ -254,9 +258,9 @@ def play_game():
         print str(state)
         # Use different numbers of iterations (simulations, tree nodes) for different players
         if state.player_to_move == 0:
-            m = ismcts(rootstate=state, itermax=1000, verbose=False)
+            m = ismcts(rootstate=state, itermax=10000, verbose=False)
         else:
-            m = ismcts(rootstate=state, itermax=10, verbose=False)
+            m = ismcts(rootstate=state, itermax=100, verbose=False)
         print "Best Move: " + str(m) + "\n"
         state.do_move(m)
 

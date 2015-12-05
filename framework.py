@@ -16,6 +16,7 @@
 # Also read the article accompanying this code at ***URL HERE***
 
 from math import *
+from operator import attrgetter
 import random
 
 class GameState:
@@ -184,7 +185,7 @@ class Node:
         Represent the tree as a string, for debugging purposes.
         """
         s = self.indent_string(indent) + str(self)
-        for c in self.child_nodes:
+        for c in sorted(self.child_nodes, key=attrgetter('visits', 'wins')):
             s += c.tree_to_string(indent + 1)
         return s
 
@@ -197,7 +198,7 @@ class Node:
 
     def children_to_string(self):
         s = ""
-        for c in self.child_nodes:
+        for c in sorted(self.child_nodes, key=attrgetter('visits', 'wins')):
             s += str(c) + "\n"
         return s
 
