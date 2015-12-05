@@ -81,7 +81,7 @@ class Deck:
         random.shuffle(self.cards)
 
 
-class Card:
+class Card(object):
     """
     A playing card, with rank and suit.
     rank must be an integer between 2 and 14 inclusive (Jack=11, Queen=12, King=13, Ace=14)
@@ -89,10 +89,10 @@ class Card:
     """
 
     def __init__(self, rank, suit):
-        if rank not in range(2, 14 + 1):
-            raise Exception("Invalid rank")
-        if suit not in ['C', 'D', 'H', 'S']:
-            raise Exception("Invalid suit")
+        # if rank not in range(2, 14 + 1):
+        #     raise Exception("Invalid rank")
+        # if suit not in ['C', 'D', 'H', 'S']:
+        #     raise Exception("Invalid suit")
         self.rank = rank
         self.suit = suit
 
@@ -100,10 +100,6 @@ class Card:
         return "??3456789TJQKA2"[self.rank] + self.suit
 
     def __eq__(self, other):
-        if isinstance(other, basestring):
-            # We're being compared to "PASS", and we can't be the same.
-            return False
-
         return self.rank == other.rank and self.suit == other.suit
 
     def __ne__(self, other):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from copy import deepcopy
+from copy import deepcopy, copy
 from operator import attrgetter
 import random
 import sys
@@ -21,6 +21,7 @@ QUADS = "QUADS"
 TRIPS = "TRIPS"
 DUBS = "DUBS"
 
+CLEAN_PACK = Deck().cards
 
 class PresidentGameState(GameState):
     """
@@ -46,17 +47,17 @@ class PresidentGameState(GameState):
         # Modes can be CONSECUTIVE, DUBS, TRIPS, QUADS, RUN
         self.modes = set()
 
-        self._deal()
 
     def clone(self):
         """ Create a deep clone of this game state.
         """
         st = PresidentGameState()
         st.player_to_move = self.player_to_move
-        st.player_hands = deepcopy(self.player_hands)
-        st.discards = deepcopy(self.discards)
-        st.current_trick = deepcopy(self.current_trick)
-        st.modes = deepcopy(self.modes)
+        st.player_hands = [copy(self.player_hands[0]), copy(self.player_hands[1])]
+        st.discards = copy(self.discards)
+        st.current_trick = copy(self.current_trick)
+        st.modes = copy(self.modes)
+
         return st
 
     def clone_and_randomize(self, observer):
@@ -68,10 +69,10 @@ class PresidentGameState(GameState):
         # The observer can see his own hand and the cards in the current trick,
         # and can remember the cards played in previous tricks
         flattened_current_trick =  [a for b in st.current_trick for a in b]
-        seen_cards = st.player_hands[observer] + st.discards + flattened_current_trick
+        seen_cards = set(st.player_hands[observer] + st.discards + flattened_current_trick)
 
         # The observer can't see the rest of the deck
-        unseen_cards = [card for card in Deck().cards
+        unseen_cards = [card for card in CLEAN_PACK
                         if card not in seen_cards]
 
         # deal the unseen cards to the player
@@ -84,7 +85,7 @@ class PresidentGameState(GameState):
                 # The player should be dealt 34 - discards - num cards in other players hand.
 
                 # Store the size of player p's hand
-                num_cards = 34 - len(self.discards) - len(self.player_hands[observer])
+                num_cards = 34 - len(st.discards) - len(st.player_hands[observer])
 
                 # Give player p the first num_cards unseen cards
                 st.player_hands[p] = sorted(unseen_cards[:num_cards],
@@ -116,7 +117,7 @@ class PresidentGameState(GameState):
             Must update player_to_move.
         """
         # If the move is "PASS" then the current trick is over
-        if "PASS" in move:
+        if move is "PASS":
             # Trick over so update the game state
             self.discards.extend([a for b in self.current_trick for a in b])
             self.current_trick = []
@@ -152,6 +153,7 @@ class PresidentGameState(GameState):
             self.current_trick.append(move)
 
             # Remove the card from the player's hand
+            # TODO - this is probably slow
             for card in move:
                 self.player_hands[self.player_to_move].remove(card)
 
@@ -229,7 +231,7 @@ class PresidentGameState(GameState):
             # If started in consecutive mode then need to follow
 
             # Can always pass.
-            return  moves + [["PASS"]]
+            return  moves + ["PASS"]
 
     def get_result(self, player):
         """
@@ -253,14 +255,15 @@ def play_game():
     """ Play a sample game between two ismcts players.
     """
     state = PresidentGameState()
+    state._deal()
 
     while state.get_moves():
         print str(state)
         # Use different numbers of iterations (simulations, tree nodes) for different players
         if state.player_to_move == 0:
-            m = ismcts(rootstate=state, itermax=10000, verbose=False)
-        else:
             m = ismcts(rootstate=state, itermax=100, verbose=False)
+        else:
+            m = ismcts(rootstate=state, itermax=10, verbose=False)
         print "Best Move: " + str(m) + "\n"
         state.do_move(m)
 
