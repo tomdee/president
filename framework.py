@@ -220,40 +220,45 @@ def ismcts(rootstate, itermax, verbose=False, quiet=False):
     """
 
     rootnode = Node()
+    if len(rootstate.get_moves()) > 1:
+        # There are moves. Simulate them
 
-    for i in range(itermax):
-        if not quiet and i > 1:
-            with term.location(0, term.height - 1):
-                print("Iteration %s/%s - Best so far (%s)" % (i, itermax, max(rootnode.child_nodes, key=lambda
-        c: c.visits).move)),
-                sys.stdout.flush()
-        node = rootnode
+        for i in range(itermax):
+            node = rootnode
 
-        # Determinize
-        state = rootstate.clone_and_randomize(rootstate.player_to_move)
+            # Determinize
+            state = rootstate.clone_and_randomize(rootstate.player_to_move)
 
-        # Select
-        while state.get_moves() != [] and node.get_untried_moves(
-                state.get_moves()) == []:  # node is fully expanded and non-terminal
-            node = node.ucb_select_child(state.get_moves())
-            state.do_move(node.move)
+            # Select
+            while state.get_moves() != [] and node.get_untried_moves(
+                    state.get_moves()) == []:  # node is fully expanded and non-terminal
+                node = node.ucb_select_child(state.get_moves())
+                state.do_move(node.move)
 
-        # Expand
-        untried_moves = node.get_untried_moves(state.get_moves())
-        if untried_moves:  # if we can expand (i.e. state/node is non-terminal)
-            m = random.choice(untried_moves)
-            player = state.player_to_move
-            state.do_move(m)
-            node = node.add_child(m, player)  # add child and descend tree
+            # Expand
+            untried_moves = node.get_untried_moves(state.get_moves())
+            if untried_moves:  # if we can expand (i.e. state/node is non-terminal)
+                m = random.choice(untried_moves)
+                player = state.player_to_move
+                state.do_move(m)
+                node = node.add_child(m, player)  # add child and descend tree
 
-        # Simulate
-        while state.get_moves():  # while state is non-terminal
-            state.do_move(random.choice(state.get_moves()))
+            # Simulate
+            while state.get_moves():  # while state is non-terminal
+                state.do_move(random.choice(state.get_moves()))
 
-        # Backpropagate
-        while node:  # backpropagate from the expanded node and work back to the root node
-            node.update(state)
-            node = node.parent_node
+            # Backpropagate
+            while node:  # backpropagate from the expanded node and work back to the root node
+                node.update(state)
+                node = node.parent_node
+
+            if not quiet:
+                with term.location(0, term.height - 1):
+                    print("Iteration %s/%s - Best so far (%s)" % (i, itermax, max(rootnode.child_nodes, key=lambda
+            c: c.visits).move)),
+                    sys.stdout.flush()
+    else:
+        rootnode.add_child(rootstate.get_moves()[0], rootstate.player_to_move)
 
     # Output some information about the tree - can be omitted
     if verbose:
