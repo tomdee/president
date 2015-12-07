@@ -17,7 +17,8 @@ from framework import GameState, Card, ismcts, Deck
 # Allow it to work with any number of players (pass handling become more complicated)
 # WOrk with Jokers
 
-#
+# run exclusivity
+# Make sure sorted
 CLEAN_PACK = Deck().cards
 term = Terminal()
 
@@ -153,7 +154,9 @@ class PresidentGameState(GameState):
         """
         Get all possible moves from this state.
         """
-        hand = self.player_hands[self.player_to_move]
+
+        hand = sorted(self.player_hands[self.player_to_move],
+                                        key=attrgetter('rank', 'suit'))
         if not hand:
             # If there are no moves left, then return the empty list.
             return hand
@@ -187,7 +190,7 @@ class PresidentGameState(GameState):
                 # not just the valid single card plays but also the DUBS, TRIPS, QUADS and RUNS.
                 straight_found = [card]
 
-                if self.combo_size == 0:
+                if self.combo_size == 0 and self.straight_length == 0:
                     # Always include the single cards when not in combo mode
                     moves.append([card])
 
@@ -198,7 +201,7 @@ class PresidentGameState(GameState):
 
                     for next_cards_index, next_card in enumerate(next_cards):
 
-                        if not self.on_the_table or self.combo_size > 0:
+                        if not self.on_the_table or (self.combo_size > 0 and self.straight_length == 0):
                             # Start looking ahead to find combos
                             if card.rank == next_card.rank:
                                 if not self.on_the_table or self.combo_size == 2:
@@ -317,6 +320,25 @@ def play_game():
     #                          Card('KS'),
     #                          Card('AD'),
     #                          Card('2D')]
+    state.player_hands[0] = [
+                         Card('js'),
+                         Card('qd'),
+                         Card('6d'),
+                         Card('jh'),
+                         Card('9d'),
+                         Card('4c'),
+                         Card('2c'),
+                         Card('tc'),
+                         Card('qc'),
+                         Card('5h'),
+                         Card('8h'),
+                         Card('6s'),
+                         Card('ah'),
+                         Card('4s'),
+                         Card('kc'),
+                         Card('qs'),
+                         Card('ac')]
+
 
     TOTAL_CARDS = 17
     while len(state.player_hands[0]) < TOTAL_CARDS:
@@ -333,7 +355,7 @@ def play_game():
         print str(state)
         # Use different numbers of iterations (simulations, tree nodes) for different players
         if state.player_to_move == 0:
-            m = ismcts(rootstate=state, itermax=100, verbose=False)
+            m = ismcts(rootstate=state, itermax=10000, verbose=False)
             print "Best Move: " + str(m) + "\n"
             state.do_move(m)
             if not state.player_hands[0]:

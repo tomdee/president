@@ -105,8 +105,8 @@ class Card(object):
 
     def __init__(self, rank=None, suit=None):
         if not suit:
-            suit = rank[1]
-            rank = NAMES.index(rank[0])
+            suit = rank[1].upper()
+            rank = NAMES.index(rank[0].upper())
             if rank not in range(2, 15 + 1):
                 raise Exception("Invalid rank")
             if suit not in ['C', 'D', 'H', 'S']:
@@ -276,3 +276,10 @@ def ismcts(rootstate, itermax, verbose=False, quiet=False):
 
     return max(rootnode.child_nodes, key=lambda
         c: c.visits).move  # return the move that was most visited
+
+
+#  try:
+#         print x
+#         time.sleep(.3)
+#         x += 1
+#     except KeyboardInterrupt:
