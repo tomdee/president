@@ -18,6 +18,9 @@
 from math import *
 from operator import attrgetter
 import random
+from blessings import Terminal
+import sys
+term = Terminal()
 
 class GameState:
     """ A state of the game, i.e. the game board. These are the only functions which are
@@ -74,30 +77,46 @@ class Deck:
     A deck of cards
     """
     def __init__(self):
-        self.cards = [Card(rank, suit) for rank in xrange(2, 14 + 1) for suit in
+        self.cards = [Card(rank, suit) for rank in xrange(3, 15 + 1) for suit in
                 ['C', 'D', 'H', 'S']]
 
     def shuffle(self):
         random.shuffle(self.cards)
 
 
+NAMES = "???3456789TJQKA2"
 class Card(object):
     """
     A playing card, with rank and suit.
-    rank must be an integer between 2 and 14 inclusive (Jack=11, Queen=12, King=13, Ace=14)
+    rank must be an integer between 3 and 15 inclusive (Jack=11, Queen=12, King=13, Ace=14)
     suit must be a string of length 1, one of 'C' (Clubs), 'D' (Diamonds), 'H' (Hearts) or 'S' (Spades)
     """
+    # def __init__(self, code):
+    #     rank = self.index(code[0])
+    #     suit = code[1]
+    #
+    #     if rank not in range(2, 15 + 1):
+    #         raise Exception("Invalid rank")
+    #     if suit not in ['C', 'D', 'H', 'S']:
+    #         raise Exception("Invalid suit")
+    #     self.rank = rank
+    #     self.suit = suit
 
-    def __init__(self, rank, suit):
-        # if rank not in range(2, 14 + 1):
-        #     raise Exception("Invalid rank")
-        # if suit not in ['C', 'D', 'H', 'S']:
-        #     raise Exception("Invalid suit")
+
+    def __init__(self, rank=None, suit=None):
+        if not suit:
+            suit = rank[1]
+            rank = NAMES.index(rank[0])
+            if rank not in range(2, 15 + 1):
+                raise Exception("Invalid rank")
+            if suit not in ['C', 'D', 'H', 'S']:
+                raise Exception("Invalid suit")
+
         self.rank = rank
         self.suit = suit
 
     def __repr__(self):
-        return "??3456789TJQKA2"[self.rank] + self.suit
+        return NAMES[self.rank] + self.suit
 
     def __eq__(self, other):
         return self.rank == other.rank and self.suit == other.suit
@@ -199,7 +218,7 @@ class Node:
         return s
 
 
-def ismcts(rootstate, itermax, verbose=False):
+def ismcts(rootstate, itermax, verbose=False, quiet=False):
     """
     Conduct an ismcts search for itermax iterations starting from rootstate.
     Return the best move from the rootstate.
@@ -208,6 +227,10 @@ def ismcts(rootstate, itermax, verbose=False):
     rootnode = Node()
 
     for i in range(itermax):
+        if not quiet:
+            with term.location(0, term.height - 1):
+                print("Iteration %s/%s" % (i, itermax)),
+                sys.stdout.flush()
         node = rootnode
 
         # Determinize
@@ -238,8 +261,10 @@ def ismcts(rootstate, itermax, verbose=False):
 
     # Output some information about the tree - can be omitted
     if verbose:
+        term.clear_eol()
         print rootnode.tree_to_string(0)
-    else:
+    elif not quiet:
+        term.clear_eol()
         print rootnode.children_to_string()
 
     return max(rootnode.child_nodes, key=lambda
