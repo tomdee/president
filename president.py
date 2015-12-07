@@ -1,19 +1,20 @@
 #!/usr/bin/env python
-from copy import deepcopy, copy
+from copy import copy
 from operator import attrgetter
 import random
 import sys
-from framework import GameState, Card, ismcts, Deck
+
 from blessings import Terminal
+
+from framework import GameState, Card, ismcts, Deck
+
 
 # TODO:
 # Make it faster? https://cardsource.readthedocs.org/en/latest/
 # Make it look better - https://github.com/worldveil/deuces
-# Put a UI on it
 # Let it play int he real world - http://arnab.org/blog/so-i-suck-24-automating-card-games-using-opencv-and-python
 #                               - https://rdmilligan.wordpress.com/2014/08/30/playing-card-detection-using-opencv-mark-v/
 # Allow it to work with any number of players (pass handling become more complicated)
-# Allow player to pass
 # WOrk with Jokers
 
 #
@@ -24,10 +25,6 @@ class PresidentGameState(GameState):
     """
     A state of the game President.
     See https://en.wikipedia.org/wiki/President_(card_game)
-
-    A few house rules/variations are being used
-     - A
-     - B
     """
 
     def __init__(self):
@@ -245,8 +242,8 @@ class PresidentGameState(GameState):
         """
         result = "P%i: %s Consec: %s Combo: %s Straight: %s Trick: %s Discards: %s" % (
         self.player_to_move,
-        # self.player_hands[self.player_to_move],
-        self.player_hands,
+        self.player_hands[self.player_to_move],
+        # self.player_hands,
         self.consecutive_mode,
         self.combo_size,
         self.straight_length,
@@ -259,49 +256,6 @@ def play_self():
     """ Play a sample game between two ismcts players.
     """
     state = PresidentGameState()
-    state.player_hands[0] = [
-                             Card('3H'),
-                             Card('4H'),
-                             Card('5H'),
-                             Card('5D'),
-                             Card('6H'),
-                             Card('7H'),
-                             # Card('8H'),
-                             # Card('9H'),
-                             # Card('JH'),
-                             # Card('QH'),
-                             # Card('KH'),
-                             # Card('AH'),
-                             # Card('2H'),
-                             # Card('QD'),
-                             # Card('KD'),
-                             # Card('AD'),
-                             # Card('2D')]
-        ]
-    
-    state.player_hands[1] = [
-                             Card('4S'),
-                             Card('4C'),
-                             Card('5S'),
-                             Card('5C'),
-                             Card('6S'),
-                             Card('7S'),
-                             Card('8S'),
-                             Card('9S'),
-                             Card('JS'),
-                             Card('QS'),
-                             Card('KS'),
-                             Card('AS'),
-                             Card('2S'),
-                             Card('QC'),
-                             Card('KC'),
-                             Card('AC'),
-                             Card('2C')]
-
-    # state.combo_size = 2
-    # state.consecutive_mode = 1
-    # state.on_the_table = [[Card('3H'), Card('3D')], [Card('4H'), Card('4D')]]
-
     state._deal()
 
     while state.get_moves():
@@ -345,32 +299,24 @@ def play_game():
     """ Play a game between one human and one AI
     """
     state = PresidentGameState()
-    # state.player_hands[1] = CLEAN_PACK
-    state.player_hands[0] = [
-                             Card('3H'),
-                             Card('4H'),
-                             Card('5C'),
-                             Card('5D'),
-                             Card('6H'),
-                             Card('7H'),
-                             Card('8C'),
-                             Card('9H'),
-                             Card('JH'),
-                             Card('QH'),
-                             Card('KC'),
-                             Card('AH'),
-                             Card('2H'),
-                             Card('QD'),
-                             Card('KS'),
-                             Card('AD'),
-                             Card('2D')]
-
-    # state.player_hands[1] = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
-
-    # state.combo_size = 2
-    # state.consecutive_mode = 1
-    # state.on_the_table = [[Card('3H'), Card('3D')], [Card('4H'), Card('4D')]]
-    # state._deal()
+    # state.player_hands[0] = [
+    #                          Card('3H'),
+    #                          Card('4H'),
+    #                          Card('5C'),
+    #                          Card('5D'),
+    #                          Card('6H'),
+    #                          Card('7H'),
+    #                          Card('8C'),
+    #                          Card('9H'),
+    #                          Card('JH'),
+    #                          Card('QH'),
+    #                          Card('KC'),
+    #                          Card('AH'),
+    #                          Card('2H'),
+    #                          Card('QD'),
+    #                          Card('KS'),
+    #                          Card('AD'),
+    #                          Card('2D')]
 
     TOTAL_CARDS = 17
     while len(state.player_hands[0]) < TOTAL_CARDS:
