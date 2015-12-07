@@ -321,23 +321,23 @@ def play_game():
     #                          Card('AD'),
     #                          Card('2D')]
     state.player_hands[0] = [
-                         Card('js'),
-                         Card('qd'),
-                         Card('6d'),
-                         Card('jh'),
                          Card('9d'),
-                         Card('4c'),
-                         Card('2c'),
-                         Card('tc'),
+                         Card('js'),
                          Card('qc'),
-                         Card('5h'),
-                         Card('8h'),
+                         Card('3d'),
+                         Card('as'),
+                         Card('2s'),
+                         Card('ts'),
+                         Card('jd'),
                          Card('6s'),
-                         Card('ah'),
-                         Card('4s'),
-                         Card('kc'),
+                         Card('9s'),
+                         Card('5h'),
+                         Card('7d'),
+                         Card('8s'),
+                         Card('4d'),
                          Card('qs'),
-                         Card('ac')]
+                         Card('tc'),
+                         Card('7s')]
 
 
     TOTAL_CARDS = 17

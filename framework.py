@@ -91,18 +91,6 @@ class Card(object):
     rank must be an integer between 3 and 15 inclusive (Jack=11, Queen=12, King=13, Ace=14)
     suit must be a string of length 1, one of 'C' (Clubs), 'D' (Diamonds), 'H' (Hearts) or 'S' (Spades)
     """
-    # def __init__(self, code):
-    #     rank = self.index(code[0])
-    #     suit = code[1]
-    #
-    #     if rank not in range(2, 15 + 1):
-    #         raise Exception("Invalid rank")
-    #     if suit not in ['C', 'D', 'H', 'S']:
-    #         raise Exception("Invalid suit")
-    #     self.rank = rank
-    #     self.suit = suit
-
-
     def __init__(self, rank=None, suit=None):
         if not suit:
             suit = rank[1].upper()
@@ -234,9 +222,10 @@ def ismcts(rootstate, itermax, verbose=False, quiet=False):
     rootnode = Node()
 
     for i in range(itermax):
-        if not quiet:
+        if not quiet and i > 1:
             with term.location(0, term.height - 1):
-                print("Iteration %s/%s" % (i, itermax)),
+                print("Iteration %s/%s - Best so far (%s)" % (i, itermax, max(rootnode.child_nodes, key=lambda
+        c: c.visits).move)),
                 sys.stdout.flush()
         node = rootnode
 
