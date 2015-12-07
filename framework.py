@@ -116,7 +116,7 @@ class Card(object):
         self.suit = suit
 
     def __repr__(self):
-        return NAMES[self.rank] + self.suit
+        return NAMES[self.rank] + PRETTY_SUITS[self.suit]
 
     def __eq__(self, other):
         return self.rank == other.rank and self.suit == other.suit
@@ -124,6 +124,13 @@ class Card(object):
     def __ne__(self, other):
         return self.rank != other.rank or self.suit != other.suit
 
+
+PRETTY_SUITS = {
+        "S" : u"\u2660".encode('utf-8'), # spades
+        "H" : u"\u2764".encode('utf-8'), # hearts
+        "D" : u"\u2666".encode('utf-8'), # diamonds
+        "C" : u"\u2663".encode('utf-8') # clubs
+    }
 
 class Node:
     """

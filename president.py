@@ -8,7 +8,7 @@ from blessings import Terminal
 
 # TODO:
 # Make it faster? https://cardsource.readthedocs.org/en/latest/
-# Make it look better -https://github.com/worldveil/deuces
+# Make it look better - https://github.com/worldveil/deuces
 # Put a UI on it
 # Let it play int he real world - http://arnab.org/blog/so-i-suck-24-automating-card-games-using-opencv-and-python
 #                               - https://rdmilligan.wordpress.com/2014/08/30/playing-card-detection-using-opencv-mark-v/
